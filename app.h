@@ -29,8 +29,8 @@ private:
     const std::string GB = "gb";
     const std::string TB = "tb";
 
-    bool program_exit = false;
-    int cmd_size = 0;
+    bool programExit = false;
+    int cmdSize = 0;
     std::string cmd = "";
     std::string* scmd;
 
@@ -39,21 +39,20 @@ public:
         headerMessage();
         do {
             waitCommandMessage();
-            //std::cin.ignore();
             getline(std::cin, cmd);
-            cmd_size = StringHandle().countSpaces(cmd) + 1;
+            cmdSize = StringHandle().countSpaces(cmd) + 1;
             scmd = StringHandle().split(cmd);
-            execute();
-        } while (!program_exit);
+            parse();
+        } while (!programExit);
         return EXIT_SUCCESS;
     }
 
 private:
-    void execute() {
+    void parse() {
         if (cmd_null()) {
             exception(NO_COMMANDS_ENTERED, 2);
         } else if (scmd[0]._Equal(HELP)) {
-            if (cmd_size == 1) {
+            if (cmdSize == 1) {
                 cmd_help();
             } else if (scmd[1]._Equal(CLS)) {
                 cmd_help_cls();
@@ -69,7 +68,7 @@ private:
         } else if (scmd[0]._Equal(EXIT)) {
             cmd_exit();
         } else if (scmd[0]._Equal(WRITE_FILE)) {
-            if (cmd_size < 4) {
+            if (cmdSize < 4) {
                 exception(PARAMETERS_ARE_MISSING);
             } else if (scmd[1]._Equal(B)) {
                 cmd_wf_bt();
@@ -123,7 +122,7 @@ private:
     }
 
     void cmd_exit() {
-        program_exit = true;
+        programExit = true;
     }
 
     void cmd_wf_bt() {
@@ -196,7 +195,7 @@ private:
     }
 
     void waitCommandMessage() {
-        std::cout << "command>";
+        std::cout << "cmd>>";
     }
 
     void success(std::string e, int line = 1) {

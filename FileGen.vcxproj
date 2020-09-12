@@ -24,7 +24,7 @@
     <ProjectGuid>{d629ee54-d1dd-46ca-8e44-7c99f3675b00}</ProjectGuid>
     <RootNamespace>FileGen</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>FileGenerator</ProjectName>
+    <ProjectName>File Generator</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
