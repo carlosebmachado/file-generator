@@ -16,6 +16,9 @@
     <Filter Include="Arquivos de Cabeçalho\watch-lib">
       <UniqueIdentifier>{3d114fb5-6d4c-4335-a615-0d0033672806}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Cabeçalho\util">
+      <UniqueIdentifier>{435ee426-8d82-4b61-9a75-05818b574519}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -26,17 +29,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="app.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
     <ClInclude Include="fileh.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="stringh.h">
       <Filter>Arquivos de Cabeçalho</Filter>
     </ClInclude>
     <ClInclude Include="watch.h">
       <Filter>Arquivos de Cabeçalho\watch-lib</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Arquivos de Cabeçalho\util</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

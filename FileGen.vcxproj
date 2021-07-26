@@ -145,9 +145,8 @@
     <ClCompile Include="watch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="app.h" />
     <ClInclude Include="fileh.h" />
-    <ClInclude Include="stringh.h" />
+    <ClInclude Include="utils.h" />
     <ClInclude Include="watch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
