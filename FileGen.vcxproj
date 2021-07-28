@@ -145,7 +145,6 @@
     <ClCompile Include="watch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fileh.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="watch.h" />
   </ItemGroup>

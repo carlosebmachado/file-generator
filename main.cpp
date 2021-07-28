@@ -1,249 +1,276 @@
 #include <iostream>
-#include "fileh.h"
+#include <fstream>
+#include <string>
+
 #include "utils.h"
 #include "watch.h"
 
-class Application {
-private:
-    // MESSAGES
-    const std::string NO_COMMANDS_ENTERED = "No commands entered.";
-    const std::string PARAMETERS_ARE_MISSING = "Parameters are missing.";
-    const std::string NOT_A_COMMAND = "not a command.";
-    const std::string UNNABLE_TO_WRITE_FILE = "Unnable to write file.";
-    const std::string FILE_GENERATED = "File generated.";
-    const std::string THIS_FUNCTION = "This function ";
-    const std::string WRONG_TYPE = "This is not a type of unit.";
+// MESSAGES
+const std::string STR_NO_COMMANDS_ENTERED    = "No commands entered.";
+const std::string STR_PARAMETERS_ARE_MISSING = "Parameters are missing.";
+const std::string STR_NOT_A_COMMAND          = "not a command.";
+const std::string STR_UNNABLE_TO_WRITE_FILE  = "Unnable to write file.";
+const std::string STR_FILE_GENERATED         = "File generated.";
+const std::string STR_THIS_FUNCTION          = "This function ";
+const std::string STR_WRONG_TYPE             = "This is not a type of unit.";
 
-    // LEVEL ONE
-    const std::string CLS = "cls";
-    const std::string EXIT = "exit";
-    const std::string HELP = "help";
-    const std::string WRITE_FILE = "wf";
+// LEVEL ONE
+const std::string STR_CLS        = "cls";
+const std::string STR_EXIT       = "exit";
+const std::string STR_HELP       = "help";
+const std::string STR_WRITE_FILE = "wf";
 
-    // LEVEL TWO: WRITE FILE
-    const std::string B = "b";
-    const std::string KB = "kb";
-    const std::string MB = "mb";
-    const std::string GB = "gb";
-    const std::string TB = "tb";
+// LEVEL TWO: WRITE FILE
+const std::string STR_BYTE     = "b";
+const std::string STR_KILOBYTE = "kb";
+const std::string STR_MEGABYTE = "mb";
 
-    bool running = true;
-    size_t cmdSize = 0;
-    std::string cmd = "";
-    std::string* scmd;
 
-public:
-    int run() {
-        headerMessage();
-        do {
-            waitCommandMessage();
-            getline(std::cin, cmd);
-            cmdSize = std::count(cmd.begin(), cmd.end(), ' ') + 1;
-            scmd = split(cmd);
-            parse();
-        } while (running);
-        return EXIT_SUCCESS;
+const int SIZE_BYTE = 1;
+const int SIZE_KILOBYTE = SIZE_BYTE * 1024;
+const int SIZE_MEGABYTE = SIZE_KILOBYTE * 1024;
+
+enum { TYPE_BYTE, TYPE_KILOBYTE, TYPE_MEGABYTE };
+enum { SUCCESS, OPEN_FILE_FAILURE, WRONG_TYPE };
+
+bool running = true;
+
+
+// FILE WRITER FUNCTIONS
+
+int getTypeSize(int type, int size) {
+    size_t tsize = 0;
+    switch (type) {
+        case TYPE_BYTE:     tsize = SIZE_BYTE;     break;
+        case TYPE_KILOBYTE: tsize = SIZE_KILOBYTE; break;
+        case TYPE_MEGABYTE: tsize = SIZE_MEGABYTE; break;
+        default: return -1;                        break;
+    }
+    return tsize;
+}
+
+int write(int type, int size, std::string file_name) {
+    const unsigned char STR_BYTE = 0b01111111;
+    std::ofstream file(file_name, std::ios_base::binary);
+    // changed to primitive type to improve performance
+    unsigned char* data;
+    size_t wordSize = getTypeSize(type, size);
+    size_t dataSize = 0;
+
+    if (wordSize == -1) {
+        return WRONG_TYPE;
     }
 
-private:
-    void parse() {
-        if (cmd_null()) {
-            exception(NO_COMMANDS_ENTERED, 2);
-        }
-        else if (scmd[0]._Equal(HELP)) {
-            if (cmdSize == 1) {
-                cmd_help();
-            }
-            else if (scmd[1]._Equal(CLS)) {
-                cmd_help_cls();
-            }
-            else if (scmd[1]._Equal(EXIT)) {
-                cmd_help_exit();
-            }
-            else if (scmd[1]._Equal(WRITE_FILE)) {
-                cmd_help_wf();
-            }
-            else {
-                exception(scmd[1], NOT_A_COMMAND, 2);
-            }
-        }
-        else if (scmd[0]._Equal(CLS)) {
-            cmd_cls();
-        }
-        else if (scmd[0]._Equal(EXIT)) {
-            cmd_exit();
-        }
-        else if (scmd[0]._Equal(WRITE_FILE)) {
-            if (cmdSize < 4) {
-                exception(PARAMETERS_ARE_MISSING);
-            }
-            else if (scmd[1]._Equal(B)) {
-                cmd_wf_bt();
-            }
-            else if (scmd[1]._Equal(KB)) {
-                cmd_wf_kb();
-            }
-            else if (scmd[1]._Equal(MB)) {
-                cmd_wf_mb();
-            }
-            else if (scmd[1]._Equal(GB)) {
-                cmd_wf_gb();
-            }
-            else if (scmd[1]._Equal(TB)) {
-                cmd_wf_tb();
-            }
-            else {
-                exception(scmd[1], NOT_A_COMMAND, 2);
-            }
-        }
-        else {
-            exception(scmd[0], NOT_A_COMMAND, 2);
-        }
+    dataSize = (size * wordSize);
+    data = new unsigned char[dataSize + 1];
+
+    for (size_t i = 0; i < dataSize; i++) {
+        data[i] = STR_BYTE;
+    }
+    // null last char
+    data[dataSize] = '\0';
+
+    if (file.is_open()) {
+        file << data;
+        file.close();
+        return SUCCESS;
     }
 
-    bool cmd_null() {
-        return scmd[0][0] == (char)0 ? true : false;
+    return OPEN_FILE_FAILURE;
+}
+
+bool isGB(int type, int size) {
+    int typeSize = getTypeSize(type, size);
+    return typeSize != -1 ? (size * typeSize >= SIZE_MEGABYTE * 1024) : false;
+}
+
+
+// INTERFACE RESOURCES
+
+void nline(int count = 1) {
+    for (size_t i = 0; i < count; i++) {
+        std::cout << std::endl;
+    }
+}
+
+void headerMessage() {
+    std::cout << "File generator v1.0";
+    nline(2);
+}
+
+void waitCommandMessage() {
+    std::cout << "cmd>>";
+}
+
+void success(std::string e, int line = 1) {
+    std::cout << "SUCCESS: " << e;
+    nline(line);
+}
+
+void exception(std::string e, int line = 1) {
+    std::cout << "ERROR: " << e;
+    nline(line);
+}
+
+void exception(std::string cmd, std::string e, int line = 1) {
+    std::cout << cmd << " " << e;
+    nline(line);
+}
+
+void print(std::string str) {
+    std::cout << str;
+}
+
+void printl(std::string str) {
+    std::cout << str;
+    nline(1);
+}
+
+bool question_yn(std::string question) {
+    std::string a;
+
+    print(question + " [y/n]? ");
+    getline(std::cin, a);
+
+    return str_tolower(a)._Equal("y");
+}
+
+
+// COMMAND IMPLEMENTATIONS
+
+bool cmd_null(char cmd) {
+    return cmd == (char)0 ? true : false;
+}
+
+void cmd_help() {
+    printl("These shell commands are defined internally. Type 'help' to see this list.");
+    printl("Type '" + STR_HELP + " name' to find out more about the function 'name'.");
+    nline(1);
+    printl(STR_WRITE_FILE + " [" + STR_BYTE + " " + STR_KILOBYTE + " " + STR_MEGABYTE + "] [size] [file name]");
+    printl(STR_CLS);
+    printl(STR_EXIT);
+    nline(1);
+}
+
+void cmd_help_cls() {
+    printl(STR_THIS_FUNCTION + "clears the console.");
+    nline(1);
+}
+
+void cmd_help_exit() {
+    printl(STR_THIS_FUNCTION + "exits the program.");
+    nline(1);
+}
+
+void cmd_help_wf() {
+    printl(STR_THIS_FUNCTION + "write a file. First parameter is size type, second parameter is size and last is file name.");
+    nline(1);
+}
+
+void cmd_cls() {
+    system(STR_CLS.c_str());
+}
+
+void cmd_exit() {
+    running = false;
+}
+
+void cmd_write_file(int type, std::string strSize, std::string path) {
+    bool make = true;
+    int size;
+
+    try {
+        size = stoi(strSize);
+    } catch (...) {
+        exception("Invalid argument '" + strSize + "'.", 2);
+        return;
     }
 
-    void cmd_help() {
-        printl("These shell commands are defined internally. Type 'help' to see this list.");
-        printl("Type '" + HELP + " name' to find out more about the function 'name'.");
-        nline(1);
-        printl(WRITE_FILE + " [" + B + " " + KB + " " + MB + " " + GB + " " + TB + "] [size] [file name]");
-        printl(CLS);
-        printl(EXIT);
-        nline(1);
+    if (isGB(type, size) && !question_yn("Make files over 1GB may take time. Are you sure you want to continue")) {
+        make = false;
     }
 
-    void cmd_help_cls() {
-        printl(THIS_FUNCTION + "clears the console.");
-        nline(1);
-    }
-
-    void cmd_help_exit() {
-        printl(THIS_FUNCTION + "exits the program.");
-        nline(1);
-    }
-
-    void cmd_help_wf() {
-        printl(THIS_FUNCTION + "write a file. First parameter is size type, second parameter is size and last is file name.");
-        nline(1);
-    }
-
-    void cmd_cls() {
-        system(CLS.c_str());
-    }
-
-    void cmd_exit() {
-        running = false;
-    }
-
-    void cmd_wf_bt() {
-        wf_generic(FileGenerator().B);
-    }
-
-    void cmd_wf_kb() {
-        wf_generic(FileGenerator().KB);
-    }
-
-    void cmd_wf_mb() {
-        wf_generic(FileGenerator().MB);
-    }
-
-    void cmd_wf_gb() {
-        big_files(FileGenerator().GB);
-    }
-
-    void cmd_wf_tb() {
-        big_files(FileGenerator().TB);
-    }
-
-    void big_files(int type) {
-        if (question_yn("Make files over 1GB may take time. Are you sure you want to continue")) {
-            wf_generic(type);
-        }
-        else {
-            printl("Aborted.");
-            nline(1);
-        }
-    }
-
-    void wf_generic(int type) {
+    if (make) {
         Stopwatch sw = Stopwatch();
         sw.start();
-        sf_message(FileGenerator().write(type, std::stoi(scmd[2]), scmd[3]));
+        auto result = write(type, size, path);
+        if (result == SUCCESS) {
+            success(STR_FILE_GENERATED);
+        } else if (result == OPEN_FILE_FAILURE) {
+            exception(STR_UNNABLE_TO_WRITE_FILE);
+        } else if (result == WRONG_TYPE) {
+            exception(STR_WRONG_TYPE);
+        }
         sw.stop();
         std::cout << "Time: " << sw.getElapsed() << "ms";
         nline(2);
-    }
-
-    void sf_message(int result) {
-        if (result == FileGenerator().SUCCESS) {
-            success(FILE_GENERATED);
-        }
-        else if (result == FileGenerator().OPEN_FILE_FAILURE) {
-            exception(UNNABLE_TO_WRITE_FILE);
-        }
-        else if (result == FileGenerator().WRONG_TYPE) {
-            exception(WRONG_TYPE);
-        }
-    }
-
-    bool question_yn(std::string question) {
-        std::string a;
-        do {
-            print(question + " [y/n]? ");
-            getline(std::cin, a);
-            if (a._Equal("y") || a._Equal("Y")) {
-                return true;
-            }
-            else if (a._Equal("n") || a._Equal("N")) {
-                return false;
-            }
-            printl("Please, type Y or N.");
-        } while (true);
-    }
-
-    void headerMessage() {
-        std::cout << "File generator v1.0";
-        nline(2);
-    }
-
-    void waitCommandMessage() {
-        std::cout << "cmd>>";
-    }
-
-    void success(std::string e, int line = 1) {
-        std::cout << "SUCCESS: " << e;
-        nline(line);
-    }
-
-    void exception(std::string e, int line = 1) {
-        std::cout << "ERROR: " << e;
-        nline(line);
-    }
-
-    void exception(std::string cmd, std::string e, int line = 1) {
-        std::cout << cmd << " " << e;
-        nline(line);
-    }
-
-    void print(std::string str) {
-        std::cout << str;
-    }
-
-    void printl(std::string str) {
-        std::cout << str;
+    } else {
+        printl("Aborted.");
         nline(1);
     }
+}
 
-    void nline(int amt = 1) {
-        for (size_t i = 0; i < amt; i++) {
-            std::cout << std::endl;
-        }
+void parse(std::string cmd) {
+    size_t cmdSize = 0;
+    std::string* scmd;
+
+    cmd = trim(remove_extra_whitespaces(cmd));
+    cmdSize = std::count(cmd.begin(), cmd.end(), ' ') + 1;
+    scmd = split(cmd);
+
+    if (cmdSize > 0) {
+        scmd[0] = str_tolower(scmd[0]);
     }
-};
+    if (cmd_null(scmd[0][0])) {
+        exception(STR_NO_COMMANDS_ENTERED, 2);
+    } else if (scmd[0]._Equal(STR_HELP)) {
+        if (cmdSize > 1) {
+            scmd[1] = str_tolower(scmd[1]);
+        }
+        if (cmdSize == 1) {
+            cmd_help();
+        } else if (scmd[1]._Equal(STR_CLS)) {
+            cmd_help_cls();
+        } else if (scmd[1]._Equal(STR_EXIT)) {
+            cmd_help_exit();
+        } else if (scmd[1]._Equal(STR_WRITE_FILE)) {
+            cmd_help_wf();
+        } else {
+            exception(scmd[1], STR_NOT_A_COMMAND, 2);
+        }
+    } else if (scmd[0]._Equal(STR_CLS)) {
+        cmd_cls();
+    } else if (scmd[0]._Equal(STR_EXIT)) {
+        cmd_exit();
+    } else if (scmd[0]._Equal(STR_WRITE_FILE)) {
+        if (cmdSize > 3) {
+            scmd[1] = str_tolower(scmd[1]);
+        }
+        if (cmdSize < 3) {
+            exception(STR_PARAMETERS_ARE_MISSING, 2);
+        } else if (scmd[1]._Equal(STR_BYTE)) {
+            cmd_write_file(TYPE_BYTE, scmd[2], scmd[3]);
+        } else if (scmd[1]._Equal(STR_KILOBYTE)) {
+            cmd_write_file(TYPE_KILOBYTE, scmd[2], scmd[3]);
+        } else if (scmd[1]._Equal(STR_MEGABYTE)) {
+            cmd_write_file(TYPE_MEGABYTE, scmd[2], scmd[3]);
+        } else {
+            cmd_write_file(TYPE_BYTE, scmd[1], scmd[2]);
+        }
+    } else {
+        exception(scmd[0], STR_NOT_A_COMMAND, 2);
+    }
+}
 
 int main() {
-    Application().run();
+    std::string cmd = "";
+
+    headerMessage();
+    do {
+        waitCommandMessage();
+        getline(std::cin, cmd);
+        parse(cmd);
+    } while (running);
+
+    return EXIT_SUCCESS;
 }

@@ -29,9 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fileh.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
     <ClInclude Include="watch.h">
       <Filter>Arquivos de Cabeçalho\watch-lib</Filter>
     </ClInclude>
